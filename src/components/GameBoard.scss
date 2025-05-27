@@ -63,9 +63,29 @@
 }
 
 .waste {
-  width: 80px;
+  width: 200px;
   height: 112px;
   position: relative;
+  display: flex;
+  gap: 10px;
+
+  &__card {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    &--0 {
+      transform: translateX(0);
+    }
+
+    &--1 {
+      transform: translateX(30px);
+    }
+
+    &--2 {
+      transform: translateX(60px);
+    }
+  }
 }
 
 .foundation {

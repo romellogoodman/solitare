@@ -4,7 +4,7 @@ import { useGameState } from '../hooks/useGameState';
 import './GameBoard.scss';
 
 const GameBoard = () => {
-  const { gameState, drawFromStock, moveCard, canMoveCard, newGame } = useGameState();
+  const { gameState, drawFromStock, moveCard, canMoveCard, newGame, getDisplayedCards } = useGameState();
   const [draggedCard, setDraggedCard] = useState(null);
   const [draggedFrom, setDraggedFrom] = useState(null);
 
@@ -19,8 +19,10 @@ const GameBoard = () => {
       }
     }
     
-    if (gameState.waste.length > 0 && gameState.waste[gameState.waste.length - 1].id === card.id) {
-      setDraggedFrom({ type: 'waste', index: 0 });
+    const displayedCards = getDisplayedCards();
+    const displayIndex = displayedCards.findIndex(c => c.id === card.id);
+    if (displayIndex !== -1) {
+      setDraggedFrom({ type: 'stock', index: gameState.stock.findIndex(c => c.id === card.id) });
     }
   };
 
@@ -61,8 +63,10 @@ const GameBoard = () => {
       }
     }
     
-    if (gameState.waste.length > 0 && gameState.waste[gameState.waste.length - 1].id === card.id) {
-      return { type: 'waste', index: 0 };
+    const displayedCards = getDisplayedCards();
+    const displayIndex = displayedCards.findIndex(c => c.id === card.id);
+    if (displayIndex !== -1) {
+      return { type: 'stock', index: gameState.stock.findIndex(c => c.id === card.id) };
     }
     
     return null;
@@ -76,22 +80,24 @@ const GameBoard = () => {
             className="stock"
             onClick={drawFromStock}
           >
-            {gameState.stock.length > 0 ? (
-              <Card card={gameState.stock[gameState.stock.length - 1]} />
+            {gameState.stock.length > gameState.drawnCount ? (
+              <Card card={{ ...gameState.stock[0], faceUp: false }} />
             ) : (
               <div className="stock__empty">↻</div>
             )}
           </div>
           
           <div className="waste">
-            {gameState.waste.length > 0 && (
-              <Card 
-                card={gameState.waste[gameState.waste.length - 1]}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onClick={() => handleDoubleClick(gameState.waste[gameState.waste.length - 1])}
-              />
-            )}
+            {getDisplayedCards().map((card, index) => (
+              <div key={card.id} className={`waste__card waste__card--${index}`}>
+                <Card
+                  card={card}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleDoubleClick(card)}
+                />
+              </div>
+            ))}
           </div>
         </div>
 

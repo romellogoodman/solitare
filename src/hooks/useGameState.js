@@ -18,14 +18,13 @@ export const useGameState = () => {
     });
 
     const stock = deck.map(card => ({ ...card, faceUp: false }));
-    const waste = [];
     const foundation = [[], [], [], []];
 
     return {
       tableau,
       stock,
-      waste,
       foundation,
+      drawnCount: 0, // Track how many cards have been drawn
       draggedCard: null,
       draggedFrom: null,
       isWon: false
@@ -34,35 +33,30 @@ export const useGameState = () => {
 
   const drawFromStock = useCallback(() => {
     setGameState(prev => {
-      if (prev.stock.length === 0) {
-        if (prev.waste.length === 0) return prev;
+      // If we've drawn all cards, reset
+      if (prev.drawnCount >= prev.stock.length) {
         return {
           ...prev,
-          stock: prev.waste.map(card => ({ ...card, faceUp: false })).reverse(),
-          waste: []
+          drawnCount: 0
         };
       }
 
-      const newStock = [...prev.stock];
-      const drawnCard = newStock.pop();
-      drawnCard.faceUp = true;
-
+      // Otherwise, increment the drawn count
       return {
         ...prev,
-        stock: newStock,
-        waste: [...prev.waste, drawnCard]
+        drawnCount: prev.drawnCount + 1
       };
     });
   }, []);
 
   const moveCard = useCallback((card, fromLocation, toLocation) => {
     setGameState(prev => {
-      const newState = { 
+      const newState = {
         ...prev,
         tableau: prev.tableau.map(col => [...col]),
         foundation: prev.foundation.map(pile => [...pile]),
-        waste: [...prev.waste],
-        stock: [...prev.stock]
+        stock: [...prev.stock],
+        drawnCount: prev.drawnCount
       };
       
       if (fromLocation.type === 'tableau') {
@@ -79,9 +73,18 @@ export const useGameState = () => {
         } else if (toLocation.type === 'foundation') {
           newState.foundation[toLocation.index].push(card);
         }
-      } else if (fromLocation.type === 'waste') {
-        newState.waste.pop();
-        
+      } else if (fromLocation.type === 'stock') {
+        // Remove card from stock
+        const stockIndex = newState.stock.findIndex(c => c.id === card.id);
+        if (stockIndex !== -1) {
+          newState.stock.splice(stockIndex, 1);
+
+          // Adjust drawnCount if needed
+          if (stockIndex < newState.drawnCount) {
+            newState.drawnCount = Math.max(0, newState.drawnCount - 1);
+          }
+        }
+
         if (toLocation.type === 'tableau') {
           newState.tableau[toLocation.index].push(card);
         } else if (toLocation.type === 'foundation') {
@@ -112,11 +115,25 @@ export const useGameState = () => {
     setGameState(initializeGame());
   }, []);
 
+  // Get the last 3 drawn cards from stock
+  const getDisplayedCards = useCallback(() => {
+    if (gameState.drawnCount === 0) return [];
+
+    const startIndex = Math.max(0, gameState.drawnCount - 3);
+    const endIndex = gameState.drawnCount;
+
+    return gameState.stock.slice(startIndex, endIndex).map(card => ({
+      ...card,
+      faceUp: true
+    }));
+  }, [gameState.stock, gameState.drawnCount]);
+
   return {
     gameState,
     drawFromStock,
     moveCard,
     canMoveCard,
-    newGame
+    newGame,
+    getDisplayedCards
   };
 };
