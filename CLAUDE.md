@@ -57,3 +57,7 @@ block-name__element-name--modifier-name
 ## SCSS
 
 This project uses SCSS for styling. CSS files should use the `.scss` extension and leverage SCSS features like nesting, variables, and mixins while maintaining BEM conventions.
+
+## Documentation Updates
+
+After each prompt/request that results in code changes, update the README.md file to reflect the current state of the project, including new features, components, or significant changes.
